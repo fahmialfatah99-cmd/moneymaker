@@ -2,4 +2,63 @@
 # Build artifacts
 dist/
 build/
+
+# Dependencies
+node_modules/
+
+# Compiled files
+*.tsbuildinfo
+*.js.map
+*.jsx.map
+*.ts.map
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Python (if applicable)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage*
+.pytest_cache/
+.mypy_cache/
+
+# Distribution / packaging
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage*
+.pytest_cache/
+.mypy_cache/
+*.tar.gz
+*.whl
 ```
