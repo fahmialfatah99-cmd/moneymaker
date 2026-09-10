@@ -43,13 +43,12 @@ export default function AffiliateFinder() {
 
   const platforms = [
     { id: 'all', name: 'Semua Platform' },
-    { id: 'amazon', name: 'Amazon Associates' },
-    { id: 'shopify', name: 'Shopify Products' },
-    { id: 'clickbank', name: 'ClickBank' },
-    { id: 'shareasale', name: 'ShareASale' },
-    { id: 'tokopedia', name: 'Tokopedia Affiliate' },
-    { id: 'shopee', name: 'Shopee Affiliate' },
-    { id: 'lazada', name: 'Lazada Affiliate' },
+    { id: 'shopee', name: 'Shopee Indonesia' },
+    { id: 'tokopedia', name: 'Tokopedia' },
+    { id: 'tiktok', name: 'TikTok Shop' },
+    { id: 'lazada', name: 'Lazada Indonesia' },
+    { id: 'blibli', name: 'Blibli' },
+    { id: 'jd', name: 'JD.ID' },
   ];
 
   const fetchTrendingProducts = async () => {
@@ -62,28 +61,30 @@ export default function AffiliateFinder() {
     setError('');
 
     try {
-      const prompt = `Analyze and identify currently trending affiliate products in ${category === 'all' ? 'multiple categories' : category} from ${platform === 'all' ? 'major platforms' : platform}. 
+      const prompt = `Analyze and identify currently trending affiliate products in Indonesia from ${category === 'all' ? 'multiple categories' : category} on ${platform === 'all' ? 'Indonesian marketplaces' : platform}. 
 
-Search query context: "${searchQuery || 'general trending products'}"
+Search query context: "${searchQuery || 'produk trending di Indonesia'}"
 
-Provide REAL, currently popular affiliate products that are actually selling well RIGHT NOW. Focus on:
-- Products with high demand and good commission rates
-- Items that are trending on social media (TikTok, Instagram, YouTube)
-- Seasonal products that are popular this month
-- Products with proven sales records
+PENTING: Hanya tampilkan produk dari marketplace INDONESIA (Shopee Indonesia, Tokopedia, TikTok Shop, Lazada Indonesia, Blibli, JD.ID). JANGAN tampilkan produk dari Amazon, Shopify, atau marketplace luar negeri.
+
+Provide REAL, currently popular affiliate products that are actually selling well RIGHT NOW in Indonesia. Focus on:
+- Products with high demand and good commission rates in Indonesian market
+- Items that are trending on Indonesian social media (TikTok Indonesia, Instagram Indonesia)
+- Seasonal products popular in Indonesia this month
+- Products with proven sales records on Indonesian marketplaces
 
 Return EXACTLY 8-12 real products in this JSON format ONLY (no markdown, no explanations):
 {
   "products": [
     {
       "name": "Exact product name",
-      "platform": "Amazon/Shopify/Tokopedia/Shopee/etc",
+      "platform": "Shopee/Tokopedia/TikTok Shop/Lazada/Blibli/JD.ID",
       "category": "category name",
-      "commission": "15%" or "$25 per sale",
-      "price": "$49.99" or "Rp 750.000",
+      "commission": "15%" or "Rp 25.000 per sale",
+      "price": "Rp 750.000",
       "rating": 4.5,
       "trend": "hot" or "rising" or "stable",
-      "description": "Brief 1-sentence description highlighting why it's trending",
+      "description": "Brief 1-sentence description highlighting why it's trending in Indonesia",
       "url": "https://actual-product-url.com",
       "dailySales": 150,
       "competitionLevel": "low" or "medium" or "high"
@@ -91,14 +92,15 @@ Return EXACTLY 8-12 real products in this JSON format ONLY (no markdown, no expl
   ]
 }
 
-IMPORTANT: Use REAL product data from actual market research. Include products from:
+IMPORTANT: Use REAL product data from Indonesian marketplaces only. Include products from:
 - Tech gadgets (wireless earbuds, smart home devices, phone accessories)
-- Beauty products (skincare, makeup tools, supplements)
+- Beauty products (skincare, makeup, supplements popular in Indonesia)
 - Home improvement (organization, decor, kitchen gadgets)
-- Fitness equipment (home workout gear, wellness products)
-- Fashion items (trending clothing, accessories)
+- Fashion items (Muslim fashion, trendy clothing, accessories)
+- Food & beverages (local snacks, drinks)
+- Baby & kids products
 
-Make sure URLs point to actual product pages on the respective platforms.`;
+Make sure URLs point to actual product pages on Indonesian marketplace platforms. Prices must be in Rupiah (Rp).`;
 
       const response = await generate(prompt, 'You are an expert affiliate marketing researcher with access to current market data. You provide accurate, real-time information about trending affiliate products.');
       
@@ -147,17 +149,17 @@ Make sure URLs point to actual product pages on the respective platforms.`;
 
   const retryWithSimplerPrompt = async () => {
     try {
-      const simplePrompt = `List 8 currently trending affiliate products across all categories. For each product provide:
-1. Product name (real, specific product)
-2. Platform (Amazon, Shopee, Tokopedia, etc)
+      const simplePrompt = `List 8 currently trending affiliate products in INDONESIA only. For each product provide:
+1. Product name (real, specific product available in Indonesia)
+2. Platform (Shopee, Tokopedia, TikTok Shop, Lazada, Blibli, or JD.ID ONLY - NO Amazon or foreign platforms)
 3. Category
 4. Commission rate
-5. Price
-6. Why it's trending right now
+5. Price in Rupiah (Rp)
+6. Why it's trending right now in Indonesia
 
-Format as JSON array only.`;
+Format as JSON array only. All products MUST be from Indonesian marketplaces.`;
 
-      const response = await generate(simplePrompt, 'You are an affiliate marketing expert.');
+      const response = await generate(simplePrompt, 'You are an affiliate marketing expert specializing in Indonesian marketplace products.');
       let jsonStr = response.trim().replace(/```json\s*/g, '').replace(/```\s*/g, '');
       
       // Try to extract array from response
@@ -169,14 +171,14 @@ Format as JSON array only.`;
       const data = JSON.parse(jsonStr);
       const formattedProducts: AffiliateProduct[] = (Array.isArray(data) ? data : []).map((p: any, index: number) => ({
         id: `product-${index}-${Date.now()}`,
-        name: p.name || p.product || 'Trending Product',
-        platform: p.platform || 'Various',
+        name: p.name || p.product || 'Produk Trending',
+        platform: p.platform || 'Shopee',
         category: p.category || 'General',
         commission: p.commission || 'Varies',
-        price: p.price || 'Check listing',
+        price: p.price || 'Cek harga',
         rating: 4.0 + Math.random() * 0.8,
         trend: 'rising',
-        description: p.description || p.trending_reason || 'Popular product with high demand',
+        description: p.description || p.trending_reason || 'Produk populer dengan permintaan tinggi di Indonesia',
         url: '#',
         dailySales: Math.floor(Math.random() * 200) + 20,
         competitionLevel: 'medium',
@@ -209,13 +211,13 @@ Format as JSON array only.`;
 
   const getPlatformIcon = (platform: string) => {
     const lower = platform.toLowerCase();
-    if (lower.includes('amazon')) return '📦';
-    if (lower.includes('shopify')) return '🛍️';
-    if (lower.includes('tokopedia')) return '🟢';
     if (lower.includes('shopee')) return '🟠';
+    if (lower.includes('tokopedia')) return '🟢';
+    if (lower.includes('tiktok')) return '🎵';
     if (lower.includes('lazada')) return '🔵';
-    if (lower.includes('clickbank')) return '💳';
-    return '🌐';
+    if (lower.includes('blibli')) return '🔷';
+    if (lower.includes('jd')) return '🔴';
+    return '🛒';
   };
 
   return (
