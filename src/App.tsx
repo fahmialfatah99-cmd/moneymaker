@@ -16,10 +16,12 @@ import PricingCalc from './components/PricingCalc';
 import FreelanceTracker from './components/FreelanceTracker';
 import SettingsPanel from './components/Settings';
 import AffiliateFinder from './components/AffiliateFinder';
+import VideoPromoter from './components/VideoPromoter';
 
 const tools = [
   { id: 'dashboard', name: 'Dashboard', icon: BarChart3, desc: 'Overview semua tools & earning' },
   { id: 'affiliate', name: 'AI Affiliate Finder', icon: ShoppingCart, desc: 'Cari produk affiliate trending dengan AI' },
+  { id: 'video', name: 'AI Video Promoter', icon: Zap, desc: 'Buat prompt video promosi 1 menit (6 scene x 10 detik)' },
   { id: 'content', name: 'AI Content Generator', icon: Zap, desc: 'Generate konten marketing dengan AI' },
   { id: 'email', name: 'AI Email Template', icon: Mail, desc: 'Buat template email marketing dengan AI' },
   { id: 'seo', name: 'AI SEO Generator', icon: Search, desc: 'Generate meta tags SEO optimal dengan AI' },
@@ -40,6 +42,7 @@ function AppContent() {
     switch (activeTool) {
       case 'dashboard': return <Dashboard tools={tools} setActiveTool={setActiveTool} />;
       case 'affiliate': return <AffiliateFinder />;
+      case 'video': return <VideoPromoter />;
       case 'invoice': return <InvoiceGenerator />;
       case 'passive': return <PassiveIncomeCalc />;
       case 'hustle': return <SideHustleTracker />;
@@ -54,7 +57,7 @@ function AppContent() {
   };
 
   const currentTool = tools.find(t => t.id === activeTool);
-  const isAITool = ['content', 'email', 'seo', 'invoice', 'pricing', 'freelance', 'passive', 'hustle', 'affiliate'].includes(activeTool);
+  const isAITool = ['content', 'email', 'seo', 'invoice', 'pricing', 'freelance', 'passive', 'hustle', 'affiliate', 'video'].includes(activeTool);
 
   return (
     <div className="min-h-screen bg-[#0a0e1a] flex">
