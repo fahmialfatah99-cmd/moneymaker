@@ -24,18 +24,25 @@ body {
   overflow-x: hidden;
 }
 
-/* Glass Card - Clean & Professional */
-.glass-card {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(99, 102, 241, 0.1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+/* Card Styles - Clean & Professional */
+.glass-card, .card {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
   transition: all 0.2s ease;
 }
 
-.glass-card:hover {
-  border-color: rgba(99, 102, 241, 0.25);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+.glass-card:hover, .card:hover {
+  border-color: #334155;
+}
+
+/* Utility Classes */
+.bg-card {
+  background: #0f172a;
+}
+
+.border-card {
+  border-color: #1e293b;
 }
 
 /* Gradient Text */
