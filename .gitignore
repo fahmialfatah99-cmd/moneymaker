@@ -1,1 +1,24 @@
-Nothing to output - the modified file 'src/components/AffiliateFinder.tsx' is a source code file and no build artifacts, dependencies, or temporary files were detected in the changes.
+```
+# Build artifacts
+dist/
+build/
+*.css
+*.js
+
+# Dependencies
+node_modules/
+
+# Editors
+.vscode/
+.idea/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Environment
+.env
+.env.local
+*.env.*
+```
