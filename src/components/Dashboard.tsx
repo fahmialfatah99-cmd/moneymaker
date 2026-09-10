@@ -1,13 +1,3 @@
-import {
-  DollarSign, TrendingUp, Users, Zap, ArrowUpRight, Settings, Sparkles, AlertTriangle
-} from 'lucide-react';
-import { useApi } from '../context/ApiContext';
-
-interface DashboardProps {
-  tools: { id: string; name: string; icon: any; desc: string }[];
-  setActiveTool: (id: string) => void;
-}
-
 import { useMemo } from 'react';
 import {
   DollarSign, TrendingUp, Users, Zap, ArrowUpRight, Settings, Sparkles, AlertTriangle, Activity
