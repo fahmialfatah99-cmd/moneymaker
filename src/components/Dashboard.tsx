@@ -92,10 +92,10 @@ export default function Dashboard({ tools, setActiveTool }: DashboardProps) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Setup Banner */}
       {!isConfigured && (
-        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 flex items-start gap-4">
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3">
           <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
             <AlertTriangle className="w-5 h-5 text-amber-400" />
           </div>
@@ -122,7 +122,7 @@ export default function Dashboard({ tools, setActiveTool }: DashboardProps) {
           return (
             <div key={i} className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 hover:border-slate-700/50 transition-all">
               <div className="flex items-center justify-between mb-3">
-                <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${stat.gradient} flex items-center justify-center shadow-lg`}>
+                <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${stat.gradient} flex items-center justify-center`}>
                   <Icon className="w-4 h-4 text-white" />
                 </div>
                 <span className="text-xs font-medium text-emerald-400 flex items-center gap-0.5">
@@ -138,7 +138,7 @@ export default function Dashboard({ tools, setActiveTool }: DashboardProps) {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Quick Access */}
         <div className="lg:col-span-2 bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
