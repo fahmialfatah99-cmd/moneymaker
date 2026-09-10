@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApi } from '../context/ApiContext';
 import { generate } from '../services/api';
 import { Briefcase, Plus, Trash2, Clock, CheckCircle, AlertCircle, DollarSign, X, Zap, Loader2, Sparkles, Send } from 'lucide-react';
@@ -15,13 +15,20 @@ interface Project {
 
 export default function FreelanceTracker() {
   const { isConfigured } = useApi();
-  const [projects, setProjects] = useState<Project[]>([
-    { id: 1, name: 'Website Redesign', client: 'PT Maju Jaya', status: 'in_progress', budget: 15000000, deadline: '2024-02-28', description: 'Redesign company profile website' },
-    { id: 2, name: 'Mobile App UI', client: 'StartupXYZ', status: 'review', budget: 25000000, deadline: '2024-02-15', description: 'Design UI/UX untuk mobile app' },
-    { id: 3, name: 'Brand Identity', client: 'Coffee Shop ABC', status: 'completed', budget: 8000000, deadline: '2024-01-30', description: 'Logo, brand guide, stationery' },
-    { id: 4, name: 'SEO Optimization', client: 'Toko Online DEF', status: 'paid', budget: 5000000, deadline: '2024-01-20', description: 'On-page SEO dan technical SEO' },
-    { id: 5, name: 'Marketing Campaign', client: 'Fashion Brand GHI', status: 'proposal', budget: 12000000, deadline: '2024-03-01', description: 'Social media campaign 3 bulan' },
-  ]);
+  const [projects, setProjects] = useState<Project[]>(() => {
+    try {
+      const saved = localStorage.getItem('moneymaker_freelance_projects');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('moneymaker_freelance_projects', JSON.stringify(projects));
+    } catch {}
+  }, [projects]);
 
   const [showAddProject, setShowAddProject] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
@@ -158,19 +165,19 @@ Berikan insight yang actionable dan spesifik.`,
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-card rounded-2xl p-5">
+        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2"><DollarSign className="w-5 h-5 text-emerald-400" /><span className="text-sm text-slate-400">Total Earned</span></div>
           <p className="text-xl font-bold text-emerald-400">{formatCurrency(totalEarned)}</p>
         </div>
-        <div className="glass-card rounded-2xl p-5">
+        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2"><Briefcase className="w-5 h-5 text-indigo-400" /><span className="text-sm text-slate-400">Pipeline</span></div>
           <p className="text-xl font-bold text-indigo-400">{formatCurrency(totalPipeline)}</p>
         </div>
-        <div className="glass-card rounded-2xl p-5">
+        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2"><Clock className="w-5 h-5 text-blue-400" /><span className="text-sm text-slate-400">Active</span></div>
           <p className="text-xl font-bold text-blue-400">{activeProjects}</p>
         </div>
-        <div className="glass-card rounded-2xl p-5">
+        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2"><AlertCircle className="w-5 h-5 text-amber-400" /><span className="text-sm text-slate-400">Proposals</span></div>
           <p className="text-xl font-bold text-amber-400">{pendingProposals}</p>
         </div>
@@ -178,7 +185,7 @@ Berikan insight yang actionable dan spesifik.`,
 
       {/* AI Panel */}
       {isConfigured && (
-        <div className="glass-card rounded-2xl p-6 border border-purple-500/20">
+        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 border border-purple-500/20">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-400" />
@@ -220,7 +227,7 @@ Berikan insight yang actionable dan spesifik.`,
       )}
 
       {/* Projects */}
-      <div className="glass-card rounded-2xl p-6">
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <Briefcase className="w-5 h-5 text-indigo-400" />
@@ -262,46 +269,54 @@ Berikan insight yang actionable dan spesifik.`,
         )}
 
         <div className="space-y-3">
-          {projects.map(project => {
-            const config = statusConfig[project.status];
-            const StatusIcon = config.icon;
-            return (
-              <div key={project.id} className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/30 hover:border-indigo-500/20 transition-all">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h4 className="text-sm font-medium text-white">{project.name}</h4>
-                      <span className={`text-xs px-2 py-0.5 rounded-full border ${config.color} flex items-center gap-1`}>
-                        <StatusIcon className="w-3 h-3" />{config.label}
-                      </span>
+          {projects.length === 0 ? (
+            <div className="text-center py-10 text-slate-500 bg-slate-800/20 rounded-xl border border-dashed border-slate-800">
+              <Briefcase className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+              <p className="text-sm font-medium text-slate-400">Belum ada project</p>
+              <p className="text-xs text-slate-600 mt-1">Klik "+ New Project" untuk menambahkan project pertama Anda.</p>
+            </div>
+          ) : (
+            projects.map(project => {
+              const config = statusConfig[project.status];
+              const StatusIcon = config.icon;
+              return (
+                <div key={project.id} className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/30 hover:border-indigo-500/20 transition-all">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h4 className="text-sm font-medium text-white">{project.name}</h4>
+                        <span className={`text-xs px-2 py-0.5 rounded-full border ${config.color} flex items-center gap-1`}>
+                          <StatusIcon className="w-3 h-3" />{config.label}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-3 text-xs text-slate-400">
+                        <span>👤 {project.client}</span>
+                        <span>💰 {formatCurrency(project.budget)}</span>
+                        <span>📅 {project.deadline}</span>
+                      </div>
+                      {project.description && <p className="text-xs text-slate-500 mt-1">{project.description}</p>}
                     </div>
-                    <div className="flex flex-wrap gap-3 text-xs text-slate-400">
-                      <span>👤 {project.client}</span>
-                      <span>💰 {formatCurrency(project.budget)}</span>
-                      <span>📅 {project.deadline}</span>
+                    <div className="flex items-center gap-2">
+                      <select value={project.status} onChange={e => updateStatus(project.id, e.target.value as Project['status'])}
+                        className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-indigo-500 focus:outline-none">
+                        <option value="proposal">Proposal</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="review">Review</option>
+                        <option value="completed">Completed</option>
+                        <option value="paid">Paid</option>
+                      </select>
+                      <button onClick={() => removeProject(project.id)} className="text-red-400 hover:text-red-300 p-1"><Trash2 className="w-4 h-4" /></button>
                     </div>
-                    {project.description && <p className="text-xs text-slate-500 mt-1">{project.description}</p>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select value={project.status} onChange={e => updateStatus(project.id, e.target.value as Project['status'])}
-                      className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-indigo-500 focus:outline-none">
-                      <option value="proposal">Proposal</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="review">Review</option>
-                      <option value="completed">Completed</option>
-                      <option value="paid">Paid</option>
-                    </select>
-                    <button onClick={() => removeProject(project.id)} className="text-red-400 hover:text-red-300 p-1"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
 
       {/* Tips */}
-      <div className="glass-card rounded-2xl p-6 border border-indigo-500/20">
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 border border-indigo-500/20">
         <h3 className="text-sm font-semibold text-indigo-300 mb-3">💡 Tips Meningkatkan Income Freelance</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[

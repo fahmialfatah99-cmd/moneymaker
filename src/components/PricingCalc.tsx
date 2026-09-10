@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApi } from '../context/ApiContext';
 import { generate } from '../services/api';
 import { Calculator, DollarSign, Target, TrendingUp, Info, Zap, Loader2, Sparkles } from 'lucide-react';
@@ -6,18 +6,30 @@ import { Calculator, DollarSign, Target, TrendingUp, Info, Zap, Loader2, Sparkle
 export default function PricingCalc() {
   const { isConfigured } = useApi();
   const [pricingType, setPricingType] = useState<'product' | 'service' | 'subscription'>('service');
-  const [costs, setCosts] = useState({
-    fixedCosts: 5000000,
-    variableCostPerUnit: 50000,
-    desiredProfitMargin: 30,
-    targetMonthlyRevenue: 20000000,
-    hourlyRate: 150000,
-    hoursPerProject: 40,
-    competitors: 500000,
-    valueMultiplier: 1.5,
-    productName: '',
-    industry: '',
+  const [costs, setCosts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('moneymaker_pricing_calc');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      fixedCosts: 0,
+      variableCostPerUnit: 0,
+      desiredProfitMargin: 0,
+      targetMonthlyRevenue: 0,
+      hourlyRate: 0,
+      hoursPerProject: 0,
+      competitors: 0,
+      valueMultiplier: 1.5,
+      productName: '',
+      industry: '',
+    };
   });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('moneymaker_pricing_calc', JSON.stringify(costs));
+    } catch {}
+  }, [costs]);
   const [aiStrategy, setAiStrategy] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -75,7 +87,7 @@ Berikan jawaban yang actionable dan spesifik.`,
   return (
     <div className="space-y-6">
       {/* Type Selector */}
-      <div className="glass-card rounded-2xl p-6">
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Calculator className="w-5 h-5 text-cyan-400" />
           AI Pricing Calculator
@@ -96,7 +108,7 @@ Berikan jawaban yang actionable dan spesifik.`,
       </div>
 
       {/* Input Parameters */}
-      <div className="glass-card rounded-2xl p-6">
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
         <h3 className="text-sm font-semibold text-slate-400 mb-4">Input Parameter</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {pricingType === 'product' && (
@@ -218,7 +230,7 @@ Berikan jawaban yang actionable dan spesifik.`,
 
       {/* AI Strategy Result */}
       {aiStrategy && (
-        <div className="glass-card rounded-2xl p-6 border border-purple-500/20">
+        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 border border-purple-500/20">
           <h3 className="text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
             <Zap className="w-4 h-4" /> AI Pricing Strategy Analysis
           </h3>
@@ -230,7 +242,7 @@ Berikan jawaban yang actionable dan spesifik.`,
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {pricingType === 'product' && (
           <>
-            <div className="glass-card rounded-2xl p-6 border border-emerald-500/20">
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 border border-emerald-500/20">
               <h3 className="text-sm font-semibold text-emerald-300 mb-4 flex items-center gap-2">
                 <DollarSign className="w-4 h-4" /> Recommended Price
               </h3>
@@ -255,7 +267,7 @@ Berikan jawaban yang actionable dan spesifik.`,
                 </div>
               </div>
             </div>
-            <div className="glass-card rounded-2xl p-6">
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
               <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
                 <Target className="w-4 h-4" /> Pricing Strategies
               </h3>
@@ -281,7 +293,7 @@ Berikan jawaban yang actionable dan spesifik.`,
 
         {pricingType === 'service' && (
           <>
-            <div className="glass-card rounded-2xl p-6 border border-emerald-500/20">
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 border border-emerald-500/20">
               <h3 className="text-sm font-semibold text-emerald-300 mb-4 flex items-center gap-2">
                 <DollarSign className="w-4 h-4" /> Recommended Pricing
               </h3>
@@ -306,7 +318,7 @@ Berikan jawaban yang actionable dan spesifik.`,
                 </div>
               </div>
             </div>
-            <div className="glass-card rounded-2xl p-6">
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
               <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
                 <Info className="w-4 h-4" /> Pricing Tiers
               </h3>
@@ -338,7 +350,7 @@ Berikan jawaban yang actionable dan spesifik.`,
 
         {pricingType === 'subscription' && (
           <>
-            <div className="glass-card rounded-2xl p-6 border border-emerald-500/20">
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 border border-emerald-500/20">
               <h3 className="text-sm font-semibold text-emerald-300 mb-4 flex items-center gap-2">
                 <DollarSign className="w-4 h-4" /> Subscription Pricing
               </h3>
@@ -359,7 +371,7 @@ Berikan jawaban yang actionable dan spesifik.`,
                 </div>
               </div>
             </div>
-            <div className="glass-card rounded-2xl p-6">
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
               <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" /> Subscription Tiers
               </h3>

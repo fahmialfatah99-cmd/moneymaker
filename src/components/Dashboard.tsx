@@ -8,22 +8,87 @@ interface DashboardProps {
   setActiveTool: (id: string) => void;
 }
 
+import { useMemo } from 'react';
+import {
+  DollarSign, TrendingUp, Users, Zap, ArrowUpRight, Settings, Sparkles, AlertTriangle, Activity
+} from 'lucide-react';
+import { useApi } from '../context/ApiContext';
+
+interface DashboardProps {
+  tools: { id: string; name: string; icon: any; desc: string }[];
+  setActiveTool: (id: string) => void;
+}
+
 export default function Dashboard({ tools, setActiveTool }: DashboardProps) {
   const { isConfigured, models } = useApi();
 
-  const stats = [
-    { label: 'Total Income', value: 'Rp 32.300.000', change: '+23.5%', icon: DollarSign, gradient: 'from-emerald-500 to-teal-600' },
-    { label: 'Active Projects', value: '12', change: '+3', icon: Users, gradient: 'from-indigo-500 to-purple-600' },
-    { label: 'Growth Rate', value: '45.2%', change: '+12.3%', icon: TrendingUp, gradient: 'from-amber-500 to-orange-600' },
-    { label: 'AI Models', value: isConfigured ? `${models.length || '60+'}` : 'N/A', change: isConfigured ? 'Online' : 'Setup', icon: Zap, gradient: 'from-pink-500 to-rose-600' },
-  ];
+  const { totalIncome, activeProjectsCount, sideHustleCount, recentActivities } = useMemo(() => {
+    let freelanceEarned = 0;
+    let activeProjects = 0;
+    let projectsList: any[] = [];
+    try {
+      const savedProjects = localStorage.getItem('moneymaker_freelance_projects');
+      if (savedProjects) {
+        projectsList = JSON.parse(savedProjects);
+        freelanceEarned = projectsList
+          .filter((p: any) => ['completed', 'paid'].includes(p.status))
+          .reduce((sum: number, p: any) => sum + (p.budget || 0), 0);
+        activeProjects = projectsList
+          .filter((p: any) => ['in_progress', 'review', 'proposal'].includes(p.status)).length;
+      }
+    } catch {}
 
-  const recentActivities = [
-    { text: 'AI generated 5 blog posts', time: '2 min ago', badge: 'AI', type: 'ai' },
-    { text: 'Invoice #042 sent to Client', time: '15 min ago', badge: '+Rp 5jt', type: 'income' },
-    { text: 'Portfolio analysis completed', time: '1 hour ago', badge: 'AI', type: 'ai' },
-    { text: 'Email campaign sent (1,200 subs)', time: '3 hours ago', badge: '4.2% CTR', type: 'email' },
-    { text: 'SEO meta tags generated (10 pages)', time: '5 hours ago', badge: 'Score: 92', type: 'seo' },
+    let hustleProfit = 0;
+    let activeHustles = 0;
+    let hustlesList: any[] = [];
+    try {
+      const savedHustles = localStorage.getItem('moneymaker_side_hustles');
+      if (savedHustles) {
+        hustlesList = JSON.parse(savedHustles);
+        hustleProfit = hustlesList.reduce((sum: number, h: any) => sum + ((h.income || 0) - (h.expense || 0)), 0);
+        activeHustles = hustlesList.filter((h: any) => h.status === 'active').length;
+      }
+    } catch {}
+
+    const total = freelanceEarned + hustleProfit;
+
+    const activities: { text: string; time: string; badge: string; type: string }[] = [];
+
+    projectsList.slice(-3).reverse().forEach((p: any) => {
+      activities.push({
+        text: `Project: ${p.name} (${p.client || 'Klien'})`,
+        time: p.deadline ? `Deadline: ${p.deadline}` : 'Freelance',
+        badge: p.status.toUpperCase(),
+        type: 'income',
+      });
+    });
+
+    hustlesList.slice(-3).reverse().forEach((h: any) => {
+      activities.push({
+        text: `Side Hustle: ${h.name}`,
+        time: h.category || 'Hustle',
+        badge: h.income ? `Rp ${(h.income / 1000).toFixed(0)}k` : 'Active',
+        type: 'ai',
+      });
+    });
+
+    return {
+      totalIncome: total,
+      activeProjectsCount: activeProjects,
+      sideHustleCount: activeHustles,
+      recentActivities: activities.slice(0, 5),
+    };
+  }, []);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
+  };
+
+  const stats = [
+    { label: 'Total Income', value: formatCurrency(totalIncome), change: totalIncome > 0 ? 'Active' : 'Rp 0', icon: DollarSign, gradient: 'from-emerald-500 to-teal-600' },
+    { label: 'Active Projects', value: String(activeProjectsCount), change: `${activeProjectsCount} Project`, icon: Users, gradient: 'from-indigo-500 to-purple-600' },
+    { label: 'Active Side Hustles', value: String(sideHustleCount), change: `${sideHustleCount} Hustle`, icon: TrendingUp, gradient: 'from-amber-500 to-orange-600' },
+    { label: 'AI Models', value: isConfigured ? `${models.length || '60+'}` : 'N/A', change: isConfigured ? 'Online' : 'Setup', icon: Zap, gradient: 'from-pink-500 to-rose-600' },
   ];
 
   return (
@@ -105,24 +170,32 @@ export default function Dashboard({ tools, setActiveTool }: DashboardProps) {
         {/* Recent Activity */}
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-white mb-4">Recent Activity</h3>
-          <div className="space-y-2">
-            {recentActivities.map((activity, i) => (
-              <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-800/20 border border-slate-800/30">
-                <div className="flex-1 min-w-0 mr-2">
-                  <p className="text-xs text-slate-300 truncate">{activity.text}</p>
-                  <p className="text-[10px] text-slate-600 mt-0.5">{activity.time}</p>
+          {recentActivities.length === 0 ? (
+            <div className="text-center py-8 text-slate-500 bg-slate-800/20 rounded-lg border border-dashed border-slate-800">
+              <Activity className="w-6 h-6 mx-auto mb-1.5 text-slate-600" />
+              <p className="text-xs text-slate-400">Belum ada aktivitas</p>
+              <p className="text-[10px] text-slate-600 mt-0.5">Tambahkan data di Freelance Manager atau Side Hustle Tracker</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {recentActivities.map((activity, i) => (
+                <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-800/20 border border-slate-800/30">
+                  <div className="flex-1 min-w-0 mr-2">
+                    <p className="text-xs text-slate-300 truncate">{activity.text}</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">{activity.time}</p>
+                  </div>
+                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md flex-shrink-0 ${
+                    activity.type === 'ai' ? 'bg-purple-500/10 text-purple-400' :
+                    activity.type === 'income' ? 'bg-emerald-500/10 text-emerald-400' :
+                    activity.type === 'email' ? 'bg-blue-500/10 text-blue-400' :
+                    'bg-cyan-500/10 text-cyan-400'
+                  }`}>
+                    {activity.badge}
+                  </span>
                 </div>
-                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md flex-shrink-0 ${
-                  activity.type === 'ai' ? 'bg-purple-500/10 text-purple-400' :
-                  activity.type === 'income' ? 'bg-emerald-500/10 text-emerald-400' :
-                  activity.type === 'email' ? 'bg-blue-500/10 text-blue-400' :
-                  'bg-cyan-500/10 text-cyan-400'
-                }`}>
-                  {activity.badge}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
