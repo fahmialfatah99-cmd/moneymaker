@@ -1,38 +1,76 @@
 import { useState } from 'react';
-import { Calculator, DollarSign, Target, TrendingUp, Info } from 'lucide-react';
+import { useApi } from '../context/ApiContext';
+import { generate } from '../services/api';
+import { Calculator, DollarSign, Target, TrendingUp, Info, Zap, Loader2, Sparkles } from 'lucide-react';
 
 export default function PricingCalc() {
+  const { isConfigured } = useApi();
   const [pricingType, setPricingType] = useState<'product' | 'service' | 'subscription'>('service');
   const [costs, setCosts] = useState({
     fixedCosts: 5000000,
     variableCostPerUnit: 50000,
     desiredProfitMargin: 30,
     targetMonthlyRevenue: 20000000,
-    hourlyRate: 100000,
+    hourlyRate: 150000,
     hoursPerProject: 40,
     competitors: 500000,
     valueMultiplier: 1.5,
+    productName: '',
+    industry: '',
   });
+  const [aiStrategy, setAiStrategy] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
   };
 
-  // Product Pricing
-  const breakEvenUnits = costs.fixedCosts / (costs.variableCostPerUnit > 0 ? 1 : 1);
   const productPrice = costs.variableCostPerUnit * (1 + costs.desiredProfitMargin / 100);
   const unitsForTarget = Math.ceil(costs.targetMonthlyRevenue / (productPrice - costs.variableCostPerUnit));
-
-  // Service Pricing
   const servicePriceBase = costs.hourlyRate * costs.hoursPerProject;
   const servicePriceWithMargin = servicePriceBase * (1 + costs.desiredProfitMargin / 100);
   const servicePriceValue = costs.competitors * costs.valueMultiplier;
-
-  // Subscription Pricing
   const subBasePrice = costs.variableCostPerUnit;
   const subWithMargin = subBasePrice * (1 + costs.desiredProfitMargin / 100);
   const annualRevenue = subWithMargin * 12;
   const subsForTarget = Math.ceil(costs.targetMonthlyRevenue / subWithMargin);
+
+  // AI: Generate pricing strategy
+  const aiGenerateStrategy = async () => {
+    if (!isConfigured) return;
+    setAiLoading(true);
+    try {
+      const context = pricingType === 'product'
+        ? `Produk dengan HPP ${formatCurrency(costs.variableCostPerUnit)}, fixed cost ${formatCurrency(costs.fixedCosts)}/bulan, harga saat ini ${formatCurrency(Math.round(productPrice))}`
+        : pricingType === 'service'
+        ? `Jasa freelance dengan rate ${formatCurrency(costs.hourlyRate)}/jam, ${costs.hoursPerProject} jam/project, harga kompetitor ${formatCurrency(costs.competitors)}`
+        : `Subscription dengan cost per user ${formatCurrency(costs.variableCostPerUnit)}/bulan, harga saat ini ${formatCurrency(Math.round(subWithMargin))}`;
+
+      const result = await generate(
+        `Analisis pricing strategy untuk bisnis saya:
+
+${context}
+${costs.productName ? `Nama produk/jasa: ${costs.productName}` : ''}
+${costs.industry ? `Industri: ${costs.industry}` : ''}
+Tipe: ${pricingType}
+
+Berikan:
+1. Analisis harga saat ini (terlalu mahal/murah/pas)
+2. Rekomendasi 3 pricing tiers (Basic, Standard, Premium) dengan harga dan fitur
+3. Psikologi pricing yang tepat
+4. Strategi diskon/promo
+5. Tips meningkatkan perceived value
+6. Warning/pitfalls yang harus dihindari
+
+Berikan jawaban yang actionable dan spesifik.`,
+        'Kamu adalah pricing strategist expert dengan pengalaman di berbagai industri. Berikan analisis yang data-driven dan actionable.'
+      );
+      setAiStrategy(result);
+    } catch (err: any) {
+      setAiStrategy('Error: ' + err.message);
+    }
+    setAiLoading(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -40,23 +78,16 @@ export default function PricingCalc() {
       <div className="glass-card rounded-2xl p-6">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Calculator className="w-5 h-5 text-cyan-400" />
-          Pricing Calculator
+          AI Pricing Calculator
         </h3>
         <div className="flex gap-3">
           {[
-            { id: 'product' as const, label: '🛍️ Produk Fisik/Digital', desc: 'Hitung harga jual produk' },
+            { id: 'product' as const, label: '🛍️ Produk', desc: 'Hitung harga jual produk' },
             { id: 'service' as const, label: '💼 Jasa/Freelance', desc: 'Hitung rate jasa Anda' },
             { id: 'subscription' as const, label: '🔄 Subscription/SaaS', desc: 'Hitung harga langganan' },
           ].map(type => (
-            <button
-              key={type.id}
-              onClick={() => setPricingType(type.id)}
-              className={`flex-1 p-4 rounded-xl text-left transition-all ${
-                pricingType === type.id
-                  ? 'bg-cyan-500/20 border border-cyan-500/40'
-                  : 'bg-slate-800/50 border border-slate-700/50 hover:border-slate-600'
-              }`}
-            >
+            <button key={type.id} onClick={() => setPricingType(type.id)}
+              className={`flex-1 p-4 rounded-xl text-left transition-all ${pricingType === type.id ? 'bg-cyan-500/20 border border-cyan-500/40' : 'bg-slate-800/50 border border-slate-700/50 hover:border-slate-600'}`}>
               <p className={`text-sm font-medium ${pricingType === type.id ? 'text-cyan-300' : 'text-slate-300'}`}>{type.label}</p>
               <p className="text-xs text-slate-500 mt-1">{type.desc}</p>
             </button>
@@ -71,12 +102,24 @@ export default function PricingCalc() {
           {pricingType === 'product' && (
             <>
               <div>
+                <label className="text-xs text-slate-400 mb-1 block">Nama Produk</label>
+                <input type="text" value={costs.productName} onChange={e => setCosts({...costs, productName: e.target.value})}
+                  placeholder="Nama produk Anda"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:outline-none placeholder:text-slate-600" />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Industri/Niche</label>
+                <input type="text" value={costs.industry} onChange={e => setCosts({...costs, industry: e.target.value})}
+                  placeholder="Contoh: Fashion, F&B, Tech"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:outline-none placeholder:text-slate-600" />
+              </div>
+              <div>
                 <label className="text-xs text-slate-400 mb-1 block">Fixed Costs/Bulan (Rp)</label>
                 <input type="number" value={costs.fixedCosts} onChange={e => setCosts({...costs, fixedCosts: parseInt(e.target.value) || 0})}
                   className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:outline-none" />
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Variable Cost/Unit (Rp)</label>
+                <label className="text-xs text-slate-400 mb-1 block">HPP/Unit (Rp)</label>
                 <input type="number" value={costs.variableCostPerUnit} onChange={e => setCosts({...costs, variableCostPerUnit: parseInt(e.target.value) || 0})}
                   className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:outline-none" />
               </div>
@@ -95,7 +138,19 @@ export default function PricingCalc() {
           {pricingType === 'service' && (
             <>
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Hourly Rate Anda (Rp/jam)</label>
+                <label className="text-xs text-slate-400 mb-1 block">Nama Jasa</label>
+                <input type="text" value={costs.productName} onChange={e => setCosts({...costs, productName: e.target.value})}
+                  placeholder="Contoh: Web Development"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:outline-none placeholder:text-slate-600" />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Industri/Spesialisasi</label>
+                <input type="text" value={costs.industry} onChange={e => setCosts({...costs, industry: e.target.value})}
+                  placeholder="Contoh: Tech Startup"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:outline-none placeholder:text-slate-600" />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Hourly Rate (Rp/jam)</label>
                 <input type="number" value={costs.hourlyRate} onChange={e => setCosts({...costs, hourlyRate: parseInt(e.target.value) || 0})}
                   className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:outline-none" />
               </div>
@@ -105,24 +160,25 @@ export default function PricingCalc() {
                   className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:outline-none" />
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Desired Margin (%)</label>
-                <input type="number" value={costs.desiredProfitMargin} onChange={e => setCosts({...costs, desiredProfitMargin: parseInt(e.target.value) || 0})}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:outline-none" />
-              </div>
-              <div>
                 <label className="text-xs text-slate-400 mb-1 block">Harga Kompetitor (Rp)</label>
                 <input type="number" value={costs.competitors} onChange={e => setCosts({...costs, competitors: parseInt(e.target.value) || 0})}
                   className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:outline-none" />
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Value Multiplier</label>
-                <input type="number" step="0.1" value={costs.valueMultiplier} onChange={e => setCosts({...costs, valueMultiplier: parseFloat(e.target.value) || 1})}
+                <label className="text-xs text-slate-400 mb-1 block">Desired Margin (%)</label>
+                <input type="number" value={costs.desiredProfitMargin} onChange={e => setCosts({...costs, desiredProfitMargin: parseInt(e.target.value) || 0})}
                   className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:outline-none" />
               </div>
             </>
           )}
           {pricingType === 'subscription' && (
             <>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Nama Produk/SaaS</label>
+                <input type="text" value={costs.productName} onChange={e => setCosts({...costs, productName: e.target.value})}
+                  placeholder="Nama produk subscription"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:border-cyan-500 focus:outline-none placeholder:text-slate-600" />
+              </div>
               <div>
                 <label className="text-xs text-slate-400 mb-1 block">Cost per User/Bulan (Rp)</label>
                 <input type="number" value={costs.variableCostPerUnit} onChange={e => setCosts({...costs, variableCostPerUnit: parseInt(e.target.value) || 0})}
@@ -141,7 +197,34 @@ export default function PricingCalc() {
             </>
           )}
         </div>
+
+        {/* AI Strategy Button */}
+        <div className="mt-4 flex items-center gap-3">
+          <button onClick={aiGenerateStrategy} disabled={aiLoading || !isConfigured}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium text-sm hover:opacity-90 transition-all disabled:opacity-50">
+            {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+            {aiLoading ? 'Analyzing...' : 'AI Pricing Strategy'}
+          </button>
+          {isConfigured && (
+            <span className="flex items-center gap-1 text-xs text-purple-400">
+              <Sparkles className="w-3 h-3" /> Powered by AI
+            </span>
+          )}
+          {!isConfigured && (
+            <span className="text-xs text-slate-500">Setup 9Router di Settings untuk AI analysis</span>
+          )}
+        </div>
       </div>
+
+      {/* AI Strategy Result */}
+      {aiStrategy && (
+        <div className="glass-card rounded-2xl p-6 border border-purple-500/20">
+          <h3 className="text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
+            <Zap className="w-4 h-4" /> AI Pricing Strategy Analysis
+          </h3>
+          <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">{aiStrategy}</pre>
+        </div>
+      )}
 
       {/* Results */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -178,17 +261,17 @@ export default function PricingCalc() {
               </h3>
               <div className="space-y-3">
                 {[
-                  { name: 'Penetration Pricing', price: productPrice * 0.7, desc: 'Masuk market dengan harga rendah' },
-                  { name: 'Competitive Pricing', price: productPrice, desc: 'Harga berdasarkan cost + margin' },
-                  { name: 'Premium Pricing', price: productPrice * 1.5, desc: 'Posisi sebagai premium brand' },
-                  { name: 'Value-Based', price: productPrice * 2, desc: 'Berdasarkan value ke customer' },
-                ].map((strategy, i) => (
+                  { name: 'Penetration', price: productPrice * 0.7, desc: 'Masuk market dengan harga rendah' },
+                  { name: 'Competitive', price: productPrice, desc: 'Cost + margin standard' },
+                  { name: 'Premium', price: productPrice * 1.5, desc: 'Posisi premium brand' },
+                  { name: 'Value-Based', price: productPrice * 2, desc: 'Berdasarkan value' },
+                ].map((s, i) => (
                   <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
                     <div>
-                      <p className="text-sm text-white">{strategy.name}</p>
-                      <p className="text-xs text-slate-500">{strategy.desc}</p>
+                      <p className="text-sm text-white">{s.name}</p>
+                      <p className="text-xs text-slate-500">{s.desc}</p>
                     </div>
-                    <p className="text-sm font-medium text-cyan-400">{formatCurrency(Math.round(strategy.price))}</p>
+                    <p className="text-sm font-medium text-cyan-400">{formatCurrency(Math.round(s.price))}</p>
                   </div>
                 ))}
               </div>
@@ -231,7 +314,7 @@ export default function PricingCalc() {
                 {[
                   { name: 'Basic', price: servicePriceWithMargin * 0.6, features: ['Core service', '1 revision', '7 hari delivery'] },
                   { name: 'Standard', price: servicePriceWithMargin, features: ['Full service', '3 revisions', '5 hari delivery', 'Support 30 hari'], popular: true },
-                  { name: 'Premium', price: servicePriceWithMargin * 1.8, features: ['Everything in Standard', 'Unlimited revisions', '3 hari delivery', 'Priority support', 'Bonus deliverables'] },
+                  { name: 'Premium', price: servicePriceWithMargin * 1.8, features: ['Everything in Standard', 'Unlimited revisions', '3 hari delivery', 'Priority support'] },
                 ].map((tier, i) => (
                   <div key={i} className={`p-4 rounded-xl border ${tier.popular ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-slate-800/30 border-slate-700/30'}`}>
                     <div className="flex items-center justify-between mb-2">
@@ -243,9 +326,7 @@ export default function PricingCalc() {
                     </div>
                     <div className="space-y-1">
                       {tier.features.map((f, j) => (
-                        <p key={j} className="text-xs text-slate-400 flex items-center gap-1">
-                          <span className="text-emerald-400">✓</span> {f}
-                        </p>
+                        <p key={j} className="text-xs text-slate-400 flex items-center gap-1"><span className="text-emerald-400">✓</span> {f}</p>
                       ))}
                     </div>
                   </div>
@@ -287,17 +368,14 @@ export default function PricingCalc() {
                   { name: 'Starter', price: subWithMargin * 0.5, period: '/bulan' },
                   { name: 'Pro', price: subWithMargin, period: '/bulan', popular: true },
                   { name: 'Enterprise', price: subWithMargin * 3, period: '/bulan' },
-                  { name: 'Annual Pro', price: subWithMargin * 10, period: '/tahun (hemat 17%)' },
+                  { name: 'Annual Pro', price: subWithMargin * 10, period: '/tahun' },
                 ].map((tier, i) => (
                   <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${tier.popular ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-slate-800/30 border-slate-700/30'}`}>
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-white">{tier.name}</p>
                       {tier.popular && <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300">Popular</span>}
                     </div>
-                    <p className="text-sm">
-                      <span className="font-bold text-emerald-400">{formatCurrency(Math.round(tier.price))}</span>
-                      <span className="text-xs text-slate-500">{tier.period}</span>
-                    </p>
+                    <p className="text-sm"><span className="font-bold text-emerald-400">{formatCurrency(Math.round(tier.price))}</span><span className="text-xs text-slate-500">{tier.period}</span></p>
                   </div>
                 ))}
               </div>

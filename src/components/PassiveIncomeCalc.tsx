@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { TrendingUp, Calculator, Target, DollarSign } from 'lucide-react';
+import { useApi } from '../context/ApiContext';
+import { generate } from '../services/api';
+import { TrendingUp, Calculator, Target, DollarSign, Zap, Loader2, Sparkles } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -13,6 +15,7 @@ interface IncomeSource {
 }
 
 export default function PassiveIncomeCalc() {
+  const { isConfigured } = useApi();
   const [sources, setSources] = useState<IncomeSource[]>([
     { id: 1, name: 'Dividen Saham', initialInvestment: 50000000, monthlyReturn: 2.5, type: 'investment' },
     { id: 2, name: 'Sewa Properti', initialInvestment: 500000000, monthlyReturn: 3, type: 'property' },
@@ -20,6 +23,8 @@ export default function PassiveIncomeCalc() {
   ]);
   const [years, setYears] = useState(5);
   const [compoundRate, setCompoundRate] = useState(5);
+  const [aiInsight, setAiInsight] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   const addSource = () => {
     setSources([...sources, { id: Date.now(), name: '', initialInvestment: 0, monthlyReturn: 0, type: 'other' }]);
@@ -37,7 +42,6 @@ export default function PassiveIncomeCalc() {
   const totalAnnual = totalMonthly * 12;
   const totalInvestment = sources.reduce((sum, s) => sum + s.initialInvestment, 0);
 
-  // Compound growth projection
   const projectionData = Array.from({ length: years + 1 }, (_, i) => {
     let total = 0;
     sources.forEach(s => {
@@ -59,33 +63,63 @@ export default function PassiveIncomeCalc() {
     return `Rp ${amount.toLocaleString('id-ID')}`;
   };
 
+  // AI: Analyze passive income portfolio
+  const aiAnalyzePortfolio = async () => {
+    if (!isConfigured) return;
+    setAiLoading(true);
+    try {
+      const result = await generate(
+        `Analisis portfolio passive income saya:
+
+Sumber income:
+${sources.map(s => `- ${s.name}: Investasi ${formatCurrency(s.initialInvestment)}, Return ${s.monthlyReturn}%/bulan = ${formatCurrency(s.initialInvestment * s.monthlyReturn / 100)}/bulan`).join('\n')}
+
+Total Investasi: ${formatCurrency(totalInvestment)}
+Total Income/Bulan: ${formatCurrency(totalMonthly)}
+Total Income/Tahun: ${formatCurrency(totalAnnual)}
+Compound Growth: ${compoundRate}%/tahun
+Proyeksi: ${years} tahun
+
+Berikan analisis:
+1. Diversifikasi score (1-10)
+2. Risk assessment per sumber income
+3. Rekomendasi optimasi portfolio
+4. Sumber passive income lain yang cocok untuk ditambahkan
+5. Strategi untuk mencapai financial freedom
+6. Warning/pitfalls yang harus dihindari
+7. Action plan 30/60/90 hari
+
+Berikan insight yang spesifik dan actionable.`,
+        'Kamu adalah financial advisor expert di passive income dan financial freedom. Berikan analisis yang data-driven dan actionable.'
+      );
+      setAiInsight(result);
+    } catch (err: any) {
+      setAiInsight('Error: ' + err.message);
+    }
+    setAiLoading(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="glass-card rounded-2xl p-5">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-emerald-400" />
-            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center"><DollarSign className="w-5 h-5 text-emerald-400" /></div>
             <span className="text-sm text-slate-400">Income/Bulan</span>
           </div>
           <p className="text-2xl font-bold text-emerald-400">{formatCurrency(totalMonthly)}</p>
         </div>
         <div className="glass-card rounded-2xl p-5">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-indigo-400" />
-            </div>
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center"><TrendingUp className="w-5 h-5 text-indigo-400" /></div>
             <span className="text-sm text-slate-400">Income/Tahun</span>
           </div>
           <p className="text-2xl font-bold text-indigo-400">{formatCurrency(totalAnnual)}</p>
         </div>
         <div className="glass-card rounded-2xl p-5">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-              <Target className="w-5 h-5 text-amber-400" />
-            </div>
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center"><Target className="w-5 h-5 text-amber-400" /></div>
             <span className="text-sm text-slate-400">Total Investasi</span>
           </div>
           <p className="text-2xl font-bold text-amber-400">{formatCurrency(totalInvestment)}</p>
@@ -97,18 +131,33 @@ export default function PassiveIncomeCalc() {
         <div className="flex flex-wrap items-center gap-6">
           <div>
             <label className="text-xs text-slate-400 block mb-1">Proyeksi (Tahun)</label>
-            <input type="range" min="1" max="20" value={years} onChange={e => setYears(parseInt(e.target.value))}
-              className="w-40 accent-indigo-500" />
+            <input type="range" min="1" max="20" value={years} onChange={e => setYears(parseInt(e.target.value))} className="w-40 accent-indigo-500" />
             <span className="text-sm text-indigo-300 ml-2">{years} tahun</span>
           </div>
           <div>
             <label className="text-xs text-slate-400 block mb-1">Compound Growth (%/tahun)</label>
-            <input type="range" min="0" max="20" value={compoundRate} onChange={e => setCompoundRate(parseInt(e.target.value))}
-              className="w-40 accent-emerald-500" />
+            <input type="range" min="0" max="20" value={compoundRate} onChange={e => setCompoundRate(parseInt(e.target.value))} className="w-40 accent-emerald-500" />
             <span className="text-sm text-emerald-300 ml-2">{compoundRate}%</span>
           </div>
+          {isConfigured && (
+            <button onClick={aiAnalyzePortfolio} disabled={aiLoading}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium text-sm hover:opacity-90 transition-all disabled:opacity-50">
+              {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              {aiLoading ? 'Analyzing...' : 'AI Portfolio Analysis'}
+            </button>
+          )}
         </div>
       </div>
+
+      {/* AI Insight */}
+      {aiInsight && (
+        <div className="glass-card rounded-2xl p-6 border border-purple-500/20">
+          <h3 className="text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
+            <Sparkles className="w-4 h-4" /> AI Portfolio Analysis
+          </h3>
+          <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">{aiInsight}</pre>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sources */}
@@ -118,9 +167,7 @@ export default function PassiveIncomeCalc() {
               <Calculator className="w-5 h-5 text-indigo-400" />
               Sumber Passive Income
             </h3>
-            <button onClick={addSource} className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 text-sm hover:bg-indigo-500/30 transition-all">
-              + Tambah Sumber
-            </button>
+            <button onClick={addSource} className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 text-sm hover:bg-indigo-500/30 transition-all">+ Tambah</button>
           </div>
 
           <div className="space-y-3">
@@ -147,9 +194,7 @@ export default function PassiveIncomeCalc() {
                   </div>
                   <div>
                     <label className="text-xs text-slate-500">Income/Bulan</label>
-                    <p className="text-emerald-400 font-medium text-sm py-2">
-                      {formatCurrency(source.initialInvestment * source.monthlyReturn / 100)}
-                    </p>
+                    <p className="text-emerald-400 font-medium text-sm py-2">{formatCurrency(source.initialInvestment * source.monthlyReturn / 100)}</p>
                   </div>
                 </div>
               </div>
@@ -163,9 +208,7 @@ export default function PassiveIncomeCalc() {
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value">
-                {pieData.map((_, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                ))}
+                {pieData.map((_, index) => (<Cell key={index} fill={COLORS[index % COLORS.length]} />))}
               </Pie>
               <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
             </PieChart>
