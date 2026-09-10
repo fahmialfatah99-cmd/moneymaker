@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAIStream } from '../hooks/useAIStream';
 import { useApi } from '../context/ApiContext';
-import { Search, Copy, Check, Globe, Hash, FileText, Zap, AlertCircle, Loader2 } from 'lucide-react';
+import { Search, Copy, Check, Zap, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 
 export default function SEOGenerator() {
   const { isConfigured } = useApi();
@@ -69,40 +69,40 @@ Pastikan semua output:
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {!isConfigured && (
-        <div className="glass-card rounded-2xl p-5 border border-amber-500/30 flex items-start gap-3">
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
           <div>
-            <h3 className="text-sm font-semibold text-amber-300 mb-1">9Router Belum Terhubung</h3>
-            <p className="text-xs text-slate-400">Setup API Key 9Router di menu Settings untuk mengaktifkan AI SEO Generator.</p>
+            <h3 className="text-sm font-semibold text-amber-300 mb-1">9Router Not Connected</h3>
+            <p className="text-xs text-slate-400">Setup API Key 9Router in Settings to enable AI SEO Generator.</p>
           </div>
         </div>
       )}
 
       {/* Input */}
-      <div className="glass-card rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Search className="w-5 h-5 text-blue-400" />
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+          <Search className="w-4 h-4 text-blue-400" />
           AI SEO Meta Generator
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           <div>
-            <label className="text-xs text-slate-400 mb-1 block">Target Keyword *</label>
-            <input type="text" placeholder="Contoh: digital marketing indonesia" value={keyword}
+            <label className="text-xs text-slate-400 mb-1.5 block">Target Keyword *</label>
+            <input type="text" placeholder="e.g., digital marketing indonesia" value={keyword}
               onChange={e => setKeyword(e.target.value)} disabled={isStreaming}
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white focus:border-blue-500 focus:outline-none placeholder:text-slate-600 disabled:opacity-50" />
+              className="w-full px-3 py-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white text-sm focus:border-blue-500 focus:outline-none placeholder:text-slate-600 disabled:opacity-50" />
           </div>
           <div>
-            <label className="text-xs text-slate-400 mb-1 block">Brand/Website</label>
-            <input type="text" placeholder="Nama brand atau website" value={description}
+            <label className="text-xs text-slate-400 mb-1.5 block">Brand/Website</label>
+            <input type="text" placeholder="Your brand name" value={description}
               onChange={e => setDescription(e.target.value)} disabled={isStreaming}
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white focus:border-blue-500 focus:outline-none placeholder:text-slate-600 disabled:opacity-50" />
+              className="w-full px-3 py-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white text-sm focus:border-blue-500 focus:outline-none placeholder:text-slate-600 disabled:opacity-50" />
           </div>
           <div>
-            <label className="text-xs text-slate-400 mb-1 block">Page Type</label>
+            <label className="text-xs text-slate-400 mb-1.5 block">Page Type</label>
             <select value={pageType} onChange={e => setPageType(e.target.value)} disabled={isStreaming}
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white focus:border-blue-500 focus:outline-none disabled:opacity-50">
+              className="w-full px-3 py-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white text-sm focus:border-blue-500 focus:outline-none disabled:opacity-50">
               <option value="homepage">Homepage</option>
               <option value="article">Article/Blog</option>
               <option value="product">Product Page</option>
@@ -111,14 +111,14 @@ Pastikan semua output:
             </select>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button onClick={generate} disabled={isStreaming || !keyword.trim() || !isConfigured}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium hover:opacity-90 transition-all disabled:opacity-50">
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium text-sm hover:opacity-90 transition-all disabled:opacity-50">
             {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
             {isStreaming ? 'Generating...' : 'Generate SEO'}
           </button>
           {isStreaming && (
-            <button onClick={reset} className="px-4 py-3 rounded-xl bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-all">
+            <button onClick={reset} className="px-4 py-2.5 rounded-lg bg-red-500/10 text-red-300 border border-red-500/20 hover:bg-red-500/20 text-sm font-medium">
               Stop
             </button>
           )}
@@ -126,7 +126,7 @@ Pastikan semua output:
       </div>
 
       {error && (
-        <div className="glass-card rounded-2xl p-5 border border-red-500/30 flex items-start gap-3">
+        <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
           <div>
             <h3 className="text-sm font-semibold text-red-300 mb-1">Error</h3>
@@ -137,19 +137,22 @@ Pastikan semua output:
 
       {/* Generated SEO */}
       {(output || isStreaming) && (
-        <div className="glass-card rounded-2xl p-6">
+        <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">SEO Analysis & Meta Tags</h3>
+            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-blue-400" />
+              SEO Analysis & Meta Tags
+            </h3>
             <button onClick={() => copyToClipboard(output, 'all')}
-              className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm transition-all ${
-                copied === 'all' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30'
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                copied === 'all' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/20'
               }`}>
-              {copied === 'all' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copied === 'all' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               {copied === 'all' ? 'Copied!' : 'Copy All'}
             </button>
           </div>
-          <div className="prose prose-invert max-w-none">
-            <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed bg-slate-900/30 rounded-xl p-4">
+          <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-800/50">
+            <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
               {output}
               {isStreaming && <span className="inline-block w-2 h-4 bg-blue-400 animate-pulse ml-1" />}
             </pre>
@@ -158,19 +161,19 @@ Pastikan semua output:
       )}
 
       {/* SEO Tips */}
-      <div className="glass-card rounded-2xl p-6 border border-blue-500/20">
-        <h3 className="text-sm font-semibold text-blue-300 mb-3">📊 SEO Best Practices 2024</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
+        <h3 className="text-xs font-semibold text-blue-300 mb-3">📊 SEO Best Practices 2024</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {[
-            'Title tag: 50-60 karakter, keyword di awal, unique per page',
-            'Meta description: 150-160 karakter, mengandung CTA dan keyword',
-            'H1: Satu per page, mengandung primary keyword',
-            'Content: 1500+ words untuk pillar content, comprehensive',
-            'Internal linking: 3-5 internal links per artikel',
+            'Title tag: 50-60 chars, keyword at start, unique per page',
+            'Meta description: 150-160 chars, include CTA and keyword',
+            'H1: One per page, contains primary keyword',
+            'Content: 1500+ words for pillar content, comprehensive',
+            'Internal linking: 3-5 internal links per article',
             'Image optimization: Alt text, compressed, WebP format',
             'Page speed: Core Web Vitals optimized, < 3s load time',
             'Mobile-first: Responsive design, mobile UX priority',
-            'Schema markup: Structured data untuk rich snippets',
+            'Schema markup: Structured data for rich snippets',
             'E-E-A-T: Experience, Expertise, Authoritativeness, Trust',
           ].map((tip, i) => (
             <div key={i} className="flex items-start gap-2 text-xs text-slate-400">
